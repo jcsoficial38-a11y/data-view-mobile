@@ -424,16 +424,16 @@
 
                 <div class="flex-1 overflow-y-auto p-5 space-y-6">
                     <!-- User Profile Card -->
-                    <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-2">
-                        <div class="flex items-center gap-3">
-                            <div id="drawer-user-avatar" class="w-10 h-10 rounded-xl bg-sky-600 text-white font-bold flex items-center justify-center text-sm shadow-sm">U</div>
+                    <div id="drawer-profile-card" class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-1.5 transition-all">
+                        <div class="flex items-center gap-2.5">
+                            <div id="drawer-user-avatar" class="w-8 h-8 rounded-xl bg-sky-600 text-white font-bold flex items-center justify-center text-xs shadow-sm shrink-0">U</div>
                             <div class="min-w-0">
-                                <h4 id="drawer-user-name" class="font-bold text-xs sm:text-sm text-slate-900 dark:text-white truncate">Usuário</h4>
-                                <p id="drawer-user-email" class="text-[11px] text-slate-500 dark:text-slate-400 truncate">email@exemplo.com</p>
+                                <h4 id="drawer-user-name" class="font-bold text-xs text-slate-900 dark:text-white truncate">Usuário</h4>
+                                <p id="drawer-user-email" class="text-[10px] text-slate-500 dark:text-slate-400 truncate">email@exemplo.com</p>
                             </div>
                         </div>
-                        <div class="pt-2 border-t border-slate-200/60 dark:border-slate-800/80 flex items-center justify-between text-[11px]">
-                            <span class="text-slate-400">Perfil de Acesso:</span>
+                        <div id="drawer-role-container" class="pt-1.5 border-t border-slate-200/60 dark:border-slate-800/80 flex items-center justify-between text-[11px]">
+                            <span id="drawer-role-label" class="text-slate-400 text-[10px]">Perfil de Acesso:</span>
                             <span id="drawer-user-role" class="font-bold">Leitor</span>
                         </div>
                     </div>
@@ -1160,15 +1160,37 @@
             document.getElementById('drawer-user-email').textContent = currentUser.email;
             document.getElementById('drawer-user-avatar').textContent = currentUser.name.charAt(0).toUpperCase();
 
+            const drawerProfileCard = document.getElementById('drawer-profile-card');
             const drawerRole = document.getElementById('drawer-user-role');
             const drawerUsersBtn = document.getElementById('drawer-users-btn');
+            const drawerAvatar = document.getElementById('drawer-user-avatar');
+            const drawerUserName = document.getElementById('drawer-user-name');
+            const drawerUserEmail = document.getElementById('drawer-user-email');
+            const drawerRoleContainer = document.getElementById('drawer-role-container');
+            const drawerRoleLabel = document.getElementById('drawer-role-label');
+
             if (isAdmin) {
-                drawerRole.className = "text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1";
-                drawerRole.innerHTML = `<i class="fas fa-shield-alt"></i> Admin Mestre`;
+                // Elegant dark green compact card for Master Administrator
+                drawerProfileCard.className = "p-2.5 rounded-xl bg-emerald-950 border border-emerald-800/80 shadow-md space-y-1 transition-all";
+                drawerAvatar.className = "w-7 h-7 rounded-lg bg-emerald-600 text-white font-bold flex items-center justify-center text-[11px] shadow-sm shrink-0";
+                drawerUserName.className = "font-bold text-xs text-emerald-100 truncate";
+                drawerUserEmail.className = "text-[10px] text-emerald-300/80 truncate";
+                drawerRoleContainer.className = "pt-1.5 border-t border-emerald-800/60 flex items-center justify-between text-[11px]";
+                drawerRoleLabel.className = "text-emerald-400/80 text-[10px]";
+                
+                drawerRole.className = "text-emerald-300 font-bold flex items-center gap-1 text-[11px]";
+                drawerRole.innerHTML = `<i class="fas fa-shield-alt text-emerald-400"></i> Admin Mestre`;
                 drawerUsersBtn.classList.remove('hidden');
                 document.getElementById('drawer-users-count').textContent = registeredUsersData.length;
             } else {
-                drawerRole.className = "text-sky-600 dark:text-sky-400 font-bold flex items-center gap-1";
+                drawerProfileCard.className = "p-3 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-1.5 transition-all";
+                drawerAvatar.className = "w-8 h-8 rounded-xl bg-sky-600 text-white font-bold flex items-center justify-center text-xs shadow-sm shrink-0";
+                drawerUserName.className = "font-bold text-xs text-slate-900 dark:text-white truncate";
+                drawerUserEmail.className = "text-[10px] text-slate-500 dark:text-slate-400 truncate";
+                drawerRoleContainer.className = "pt-1.5 border-t border-slate-200/60 dark:border-slate-800/80 flex items-center justify-between text-[11px]";
+                drawerRoleLabel.className = "text-slate-400 text-[10px]";
+                
+                drawerRole.className = "text-sky-600 dark:text-sky-400 font-bold flex items-center gap-1 text-[11px]";
                 drawerRole.innerHTML = `<i class="fas fa-user-check"></i> Leitor`;
                 drawerUsersBtn.classList.add('hidden');
             }
