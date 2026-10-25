@@ -1,0 +1,6 @@
+{
+  "name": "Data View Mobile",
+  "description": "Visualizador e gerenciador de planilhas com controle de acesso em tempo real e suporte a PWA.",
+  "permissions": [],
+  "capabilities": []
+}

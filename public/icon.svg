@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="brandGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0ea5e9"/>
+      <stop offset="100%" stop-color="#0284c7"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="16" stdDeviation="20" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+  <!-- Background squircle -->
+  <rect width="512" height="512" rx="112" fill="url(#brandGrad)"/>
+  
+  <!-- Subtle inner card -->
+  <g filter="url(#shadow)">
+    <rect x="96" y="96" width="320" height="320" rx="36" fill="#ffffff" fill-opacity="0.95"/>
+    
+    <!-- Table Header (Sky Blue) -->
+    <rect x="96" y="96" width="320" height="90" rx="36" fill="#0284c7"/>
+    <rect x="96" y="150" width="320" height="36" fill="#0284c7"/>
+    
+    <!-- Header dividers -->
+    <line x1="200" y1="108" x2="200" y2="174" stroke="#bae6fd" stroke-width="4" stroke-linecap="round"/>
+    <line x1="308" y1="108" x2="308" y2="174" stroke="#bae6fd" stroke-width="4" stroke-linecap="round"/>
+    
+    <!-- Grid rows & columns -->
+    <line x1="96" y1="262" x2="416" y2="262" stroke="#e2e8f0" stroke-width="6"/>
+    <line x1="96" y1="338" x2="416" y2="338" stroke="#e2e8f0" stroke-width="6"/>
+    
+    <line x1="200" y1="186" x2="200" y2="416" stroke="#e2e8f0" stroke-width="6"/>
+    <line x1="308" y1="186" x2="308" y2="416" stroke="#e2e8f0" stroke-width="6"/>
+    
+    <!-- Sample Data Bars in Table -->
+    <!-- Col 1 -->
+    <rect x="116" y="214" width="60" height="18" rx="9" fill="#0284c7" fill-opacity="0.8"/>
+    <rect x="116" y="290" width="48" height="18" rx="9" fill="#94a3b8"/>
+    <rect x="116" y="366" width="56" height="18" rx="9" fill="#94a3b8"/>
+    
+    <!-- Col 2 -->
+    <rect x="220" y="214" width="68" height="18" rx="9" fill="#38bdf8"/>
+    <rect x="220" y="290" width="54" height="18" rx="9" fill="#94a3b8"/>
+    <rect x="220" y="366" width="62" height="18" rx="9" fill="#94a3b8"/>
+    
+    <!-- Col 3 (Values / Badges) -->
+    <rect x="328" y="214" width="68" height="22" rx="11" fill="#10b981"/>
+    <rect x="328" y="290" width="68" height="22" rx="11" fill="#0ea5e9"/>
+    <rect x="328" y="366" width="68" height="22" rx="11" fill="#f59e0b"/>
+  </g>
+</svg>

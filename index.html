@@ -1,52 +1,1638 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" class="h-full">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Data View Mobile</title>
+    <meta name="description" content="Acesse suas planilhas protegidas em tempo real - Visualizador e gerenciador de planilhas com controle de acesso.">
+    <meta property="og:title" content="Data View Mobile">
+    <meta property="og:description" content="Acesse suas planilhas protegidas em tempo real com controle de acesso.">
     
-    <!-- Configurações completas de PWA para instalação nativa -->
-    <link rel="manifest" href="data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22Data%20View%20Mobile%22%2C%22short_name%22%3A%22Data%20View%22%2C%22start_url%22%3A%22%2F%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23ffffff%22%2C%22theme_color%22%3A%22%232563eb%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22https%3A%2F%2Fcdn-icons-png.flaticon.com%2F512%2F2885%2F2885437.png%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fpng%22%7D%5D%7D">
-    <meta name="theme-color" content="#2563eb">
+    <!-- PWA Web App Manifest & Icons -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0284c7">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Data View">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="icon" type="image/svg+xml" href="icon.svg">
+    <link rel="icon" type="image/png" sizes="192x192" href="pwa-192x192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="pwa-512x512.png">
     
-    <!-- Tailwind CSS -->
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome CDN for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Plus Jakarta Sans Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
 </head>
-<body class="bg-gray-50 text-gray-900 min-h-screen flex flex-col">
+<body class="bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-full flex flex-col selection:bg-sky-500 selection:text-white transition-colors duration-200">
 
-    <!-- Cabeçalho -->
-    <header class="bg-blue-600 text-white shadow-md p-4 flex justify-between items-center">
-        <h1 class="text-xl font-bold">Data View Mobile</h1>
-        <button id="adminBtn" class="bg-blue-700 hover:bg-blue-800 text-sm px-3 py-1.5 rounded-lg font-medium transition">
-            Admin
-        </button>
-    </header>
+    <!-- ================= TOAST NOTIFICATION ================= -->
+    <div id="toast" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 transform -translate-y-20 opacity-0 transition-all duration-300 pointer-events-none max-w-sm w-full px-4">
+        <div id="toast-card" class="bg-slate-900 text-white dark:bg-slate-800 dark:border-slate-700 p-3.5 rounded-2xl shadow-xl text-xs sm:text-sm font-medium flex items-center justify-between border border-slate-700/80 backdrop-blur-md">
+            <div class="flex items-center gap-2.5 min-w-0 pr-2">
+                <i id="toast-icon" class="fas fa-check-circle text-emerald-400 text-base shrink-0"></i>
+                <span id="toast-msg" class="truncate">Mensagem</span>
+            </div>
+            <button type="button" onclick="hideToast()" class="p-1 text-slate-400 hover:text-white pointer-events-auto">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
 
-    <!-- Conteúdo Principal -->
-    <main class="flex-1 p-4 max-w-md w-full mx-auto flex flex-col justify-center">
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 text-center">
-            <h2 class="text-lg font-semibold text-gray-800 mb-2">Aplicação Pronta</h2>
-            <p class="text-sm text-gray-600 mb-4">O sistema está configurado, integrado e pronto para ser instalado diretamente no seu telemóvel.</p>
-            <div class="p-3 bg-blue-50 text-blue-700 rounded-xl text-sm font-medium">
-                PWA Ativo &bull; Pronto para Instalação
+    <!-- MAIN APP CONTAINER -->
+    <div class="flex-1 flex flex-col min-h-screen">
+
+        <!-- ================= AUTH CONTAINER ================= -->
+        <div id="auth-container" class="flex-1 flex flex-col justify-center my-auto py-8 px-4 max-w-md mx-auto w-full">
+            
+            <!-- Brand Header -->
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 bg-sky-500/10 dark:bg-sky-500/20 text-sky-600 dark:text-sky-400 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-inner text-2xl">
+                    <i class="fas fa-table"></i>
+                </div>
+                <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                    Data View <span class="text-sky-600 dark:text-sky-400">Mobile</span>
+                </h1>
+                <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1.5 max-w-xs mx-auto">
+                    Acesse suas planilhas protegidas em tempo real com controle de acessos
+                </p>
+            </div>
+
+            <!-- Login Box -->
+            <div id="login-card" class="bg-white dark:bg-slate-900 rounded-3xl shadow-xl border border-slate-200/80 dark:border-slate-800 p-6 sm:p-8">
+                <div class="mb-6">
+                    <h2 class="text-xl font-bold text-slate-900 dark:text-white">Entrar na sua Conta</h2>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Informe suas credenciais para visualizar planilhas</p>
+                </div>
+
+                <form onsubmit="handleLoginSubmit(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1.5">Endereço de E-mail</label>
+                        <div class="relative">
+                            <i class="fas fa-envelope absolute left-3.5 top-3.5 text-slate-400 text-sm"></i>
+                            <input type="email" id="login-email" required placeholder="seu.email@exemplo.com" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 text-slate-900 dark:text-white placeholder-slate-400">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1.5">Sua Senha</label>
+                        <div class="relative">
+                            <i class="fas fa-lock absolute left-3.5 top-3.5 text-slate-400 text-sm"></i>
+                            <input type="password" id="login-password" required placeholder="••••••••" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 text-slate-900 dark:text-white placeholder-slate-400">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full bg-sky-600 hover:bg-sky-700 text-white font-semibold py-3 px-4 rounded-xl shadow-lg shadow-sky-500/20 active:scale-[0.98] transition-all text-sm flex items-center justify-center gap-2 mt-2">
+                        <span>Entrar no Aplicativo</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </form>
+
+                <div class="mt-6 pt-5 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between gap-2">
+                    <button type="button" onclick="showAuthMode('register')" class="text-xs font-semibold text-sky-600 dark:text-sky-400 hover:underline">
+                        Não tem uma conta? Cadastre-se
+                    </button>
+
+                    <!-- Discreet Yellow Admin Button -->
+                    <button type="button" onclick="openAdminModal()" class="px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-semibold flex items-center gap-1.5 border border-amber-500/30 transition-all shadow-sm active:scale-[0.98]" title="Acesso Restrito ao Administrador">
+                        <i class="fas fa-key text-amber-500"></i>
+                        <span>Acesso Restrito Admin</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Register Box -->
+            <div id="register-card" class="bg-white dark:bg-slate-900 rounded-3xl shadow-xl border border-slate-200/80 dark:border-slate-800 p-6 sm:p-8 hidden">
+                <div class="mb-6 text-center">
+                    <div class="w-12 h-12 bg-sky-500/10 text-sky-600 dark:text-sky-400 rounded-xl flex items-center justify-center mx-auto mb-2 text-xl">
+                        <i class="fas fa-user-plus"></i>
+                    </div>
+                    <h2 class="text-xl font-bold text-slate-900 dark:text-white">Criar Nova Conta</h2>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Cadastro de Usuário Leitor de Planilhas</p>
+                </div>
+
+                <form onsubmit="handleRegisterSubmit(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1.5">Nome Completo</label>
+                        <div class="relative">
+                            <i class="fas fa-user absolute left-3.5 top-3.5 text-slate-400 text-sm"></i>
+                            <input type="text" id="reg-name" required placeholder="Ex: Carlos Silva" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 text-slate-900 dark:text-white">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1.5">Endereço de E-mail</label>
+                        <div class="relative">
+                            <i class="fas fa-envelope absolute left-3.5 top-3.5 text-slate-400 text-sm"></i>
+                            <input type="email" id="reg-email" required placeholder="seu.email@exemplo.com" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 text-slate-900 dark:text-white">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1.5">Definir Senha</label>
+                        <div class="relative">
+                            <i class="fas fa-lock absolute left-3.5 top-3.5 text-slate-400 text-sm"></i>
+                            <input type="password" id="reg-password" required placeholder="••••••••" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 text-slate-900 dark:text-white">
+                        </div>
+                    </div>
+
+                    <div class="p-3 bg-slate-100 dark:bg-slate-950/60 rounded-xl border border-slate-200 dark:border-slate-800">
+                        <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 block mb-1">Perfil de Acesso:</span>
+                        <div class="text-xs font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                            <i class="fas fa-eye text-sky-500"></i>
+                            <span>Usuário / Leitor (Somente Visualização)</span>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full bg-sky-600 hover:bg-sky-700 text-white font-semibold py-3 px-4 rounded-xl shadow-lg shadow-sky-500/20 active:scale-[0.98] transition-all text-sm flex items-center justify-center gap-2 mt-2">
+                        <span>Criar Conta</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </form>
+
+                <div class="mt-6 pt-5 border-t border-slate-100 dark:border-slate-800/80 text-center">
+                    <button type="button" onclick="showAuthMode('login')" class="text-xs font-semibold text-sky-600 dark:text-sky-400 hover:underline">
+                        Já tem uma conta? Clique aqui para Entrar
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ================= MAIN APP DASHBOARD ================= -->
+        <div id="app-dashboard" class="hidden flex-1 flex flex-col pb-24">
+            
+            <!-- HEADER BAR -->
+            <header class="sticky top-0 z-30 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800/80 px-4 sm:px-6 py-3 transition-colors">
+                <div class="max-w-6xl mx-auto flex items-center justify-between gap-3 sm:gap-6">
+                    <div class="flex items-center gap-3 shrink-0">
+                        <div class="w-10 h-10 rounded-xl bg-sky-500/10 dark:bg-sky-500/20 text-sky-600 dark:text-sky-400 flex items-center justify-center font-bold text-lg shadow-inner">
+                            <i class="fas fa-table"></i>
+                        </div>
+                        <div>
+                            <a href="#" class="font-extrabold text-base sm:text-lg tracking-tight text-slate-900 dark:text-white leading-none block">
+                                Data View <span class="text-sky-600 dark:text-sky-400 font-semibold text-xs sm:text-sm">Mobile</span>
+                            </a>
+                            <div id="user-role-badge" class="flex items-center gap-1.5 mt-1">
+                                <!-- Injected via JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2 shrink-0">
+                        <button type="button" id="header-install-btn" onclick="triggerPWAInstall()" class="hidden px-2.5 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold flex items-center gap-1.5 shadow-sm active:scale-[0.98] transition-all" title="Instalar Aplicativo">
+                            <i class="fas fa-download"></i>
+                            <span class="hidden sm:inline">Instalar App</span>
+                        </button>
+                        <button type="button" onclick="toggleDarkMode()" class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-200 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors" title="Alternar Tema">
+                            <i id="theme-icon" class="fas fa-moon text-sm"></i>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- MAIN CONTENT -->
+            <main class="max-w-6xl w-full mx-auto p-4 sm:p-6 space-y-6 flex-1">
+                
+                <!-- ADMIN PUBLISH PANEL -->
+                <section id="admin-panel" class="hidden bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-6 shadow-sm border border-slate-200/90 dark:border-slate-800 space-y-4">
+                    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-3.5">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                            <div>
+                                <h2 class="font-bold text-sm text-slate-900 dark:text-white uppercase tracking-wider">Painel do Administrador</h2>
+                                <p class="text-[11px] text-slate-500 dark:text-slate-400">Gerencie e publique planilhas protegidas para os usuários</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            <button type="button" onclick="fillSampleSheet()" class="text-[11px] font-semibold text-sky-600 dark:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-950/50 px-2.5 py-1 rounded-lg border border-sky-200 dark:border-sky-800 transition-colors flex items-center gap-1" title="Preencher com exemplo">
+                                <i class="fas fa-wand-magic-sparkles text-sky-500"></i>
+                                <span class="hidden sm:inline">Exemplo Rápido</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <form onsubmit="handleAddNewSheet(event)" class="space-y-3.5">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div class="sm:col-span-2">
+                                <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Nome da Planilha</label>
+                                <div class="relative">
+                                    <i class="fas fa-file-alt absolute left-3 top-3 text-slate-400 text-sm"></i>
+                                    <input type="text" id="sheet-title" placeholder="Ex: Escala de Folga & Plantão Mês" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl pl-9 pr-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 text-slate-900 dark:text-white">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Categoria</label>
+                                <select id="sheet-category" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 text-slate-900 dark:text-white">
+                                    <option value="Escala & Plantão">Escala & Plantão</option>
+                                    <option value="Vendas & Metas">Vendas & Metas</option>
+                                    <option value="Estoque & Suprimentos">Estoque & Suprimentos</option>
+                                    <option value="Financeiro">Financeiro</option>
+                                    <option value="Operacional">Operacional</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Link de Visualização (Google Sheets / OneDrive / Excel Online)</label>
+                            <div class="relative">
+                                <i class="fas fa-link absolute left-3 top-3 text-slate-400 text-sm"></i>
+                                <input type="url" id="sheet-url" placeholder="Cole o link publicado ou de compartilhamento aqui..." class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl pl-9 pr-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 text-slate-900 dark:text-white">
+                            </div>
+                            <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1 flex items-center gap-1">
+                                <i class="fas fa-info-circle text-sky-500"></i> Links do Excel/OneDrive abrem diretamente no navegador e Google Sheets embutido.
+                            </p>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Descrição / Observações (Opcional)</label>
+                            <input type="text" id="sheet-desc" placeholder="Ex: Atualizada diariamente às 08h00 pela equipe de coordenação." class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 text-slate-900 dark:text-white">
+                        </div>
+
+                        <button type="submit" class="w-full bg-sky-600 hover:bg-sky-700 text-white font-semibold py-3 px-4 rounded-xl shadow-md shadow-sky-500/10 active:scale-[0.99] transition-all text-xs sm:text-sm flex items-center justify-center gap-2">
+                            <i class="fas fa-plus"></i>
+                            <span>Salvar e Publicar Planilha</span>
+                        </button>
+                    </form>
+                </section>
+
+                <!-- SEARCH BAR & SPREADSHEETS LIST -->
+                <section class="space-y-4">
+                    <div class="bg-white dark:bg-slate-900 rounded-2xl p-3.5 sm:p-4 shadow-sm border border-slate-200/90 dark:border-slate-800">
+                        <div class="relative">
+                            <i class="fas fa-search absolute left-3.5 top-3.5 text-slate-400 text-sm"></i>
+                            <input type="text" id="search-query" oninput="renderSheetsList()" placeholder="Pesquisar por título de planilha..." class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl pl-10 pr-9 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 text-slate-900 dark:text-white placeholder-slate-400">
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between px-1">
+                        <div class="flex items-center gap-2">
+                            <h2 class="font-bold text-xs sm:text-sm text-slate-600 dark:text-slate-400 uppercase tracking-wider">Arquivos Disponíveis</h2>
+                            <span id="sheets-count" class="bg-sky-500/10 text-sky-600 dark:text-sky-400 text-xs font-bold px-2 py-0.5 rounded-full">0</span>
+                        </div>
+                        <div id="role-status-text" class="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                            <!-- Injected dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- CARDS CONTAINER -->
+                    <div id="sheets-list" class="space-y-3">
+                        <!-- Rendered via JavaScript -->
+                    </div>
+                </section>
+            </main>
+
+            <!-- FOOTER -->
+            <footer class="mt-auto border-t border-slate-200/60 dark:border-slate-800/60 bg-white/50 dark:bg-slate-900/50 py-3 px-4 text-center">
+                <p id="footer-text" class="max-w-6xl mx-auto text-xs text-slate-500 dark:text-slate-400">
+                    <!-- Injected dynamically -->
+                </p>
+            </footer>
+
+            <!-- BOTTOM NAVIGATION BAR (PRIMARY APP NAVIGATION) -->
+            <div class="fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 pb-safe">
+                <div class="grid grid-cols-4 items-center h-16 max-w-md mx-auto px-2 text-center">
+                    <button type="button" onclick="showMobileSection('sheets')" class="flex flex-col items-center justify-center text-sky-600 dark:text-sky-400 font-bold">
+                        <i class="fas fa-table text-lg"></i>
+                        <span class="text-[10px] mt-1">Planilhas</span>
+                    </button>
+                    <button type="button" id="mobile-add-btn" onclick="showMobileSection('add')" class="flex flex-col items-center justify-center text-slate-500 dark:text-slate-400">
+                        <i class="fas fa-plus-circle text-lg"></i>
+                        <span class="text-[10px] mt-1">Adicionar</span>
+                    </button>
+                    <button type="button" id="mobile-trash-btn" onclick="openTrashModal()" class="flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 relative">
+                        <i class="fas fa-trash-alt text-lg text-rose-500"></i>
+                        <span class="text-[10px] mt-1">Lixeira</span>
+                        <span id="mobile-trash-badge" class="absolute top-1 right-3 bg-rose-600 text-white text-[9px] font-bold w-4 h-4 rounded-full hidden">0</span>
+                    </button>
+                    <button type="button" onclick="openDrawer()" class="flex flex-col items-center justify-center text-slate-500 dark:text-slate-400">
+                        <i class="fas fa-user-circle text-lg"></i>
+                        <span class="text-[10px] mt-1">Perfil</span>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ================= ADMIN PASSWORD MODAL (FIRST ACCESS & LOGIN) ================= -->
+    <div id="admin-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 max-w-sm w-full rounded-3xl p-6 shadow-2xl border border-amber-500/40 relative space-y-4">
+            <button type="button" onclick="closeAdminModal()" class="absolute right-4 top-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                <i class="fas fa-times"></i>
+            </button>
+
+            <div class="text-center">
+                <div id="admin-modal-icon" class="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto mb-3 shadow-inner text-xl">
+                    <i class="fas fa-key"></i>
+                </div>
+                <h3 id="admin-modal-title" class="font-bold text-lg text-slate-900 dark:text-white">Acesso Restrito Admin</h3>
+                <p id="admin-modal-desc" class="text-xs text-slate-500 dark:text-slate-400 mt-1">Digite a Senha do Administrador Mestre para continuar</p>
+            </div>
+
+            <form onsubmit="handleAdminModalSubmit(event)" class="space-y-3.5">
+                <div id="admin-pass-container">
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1.5">Senha de Administrador</label>
+                    <div class="relative">
+                        <i class="fas fa-lock absolute left-3.5 top-3.5 text-slate-400 text-sm"></i>
+                        <input type="password" id="admin-password-input" required placeholder="••••••••" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 text-slate-900 dark:text-white">
+                    </div>
+                </div>
+
+                <div id="admin-confirm-container" class="hidden">
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1.5">Confirmar Nova Senha</label>
+                    <div class="relative">
+                        <i class="fas fa-lock absolute left-3.5 top-3.5 text-slate-400 text-sm"></i>
+                        <input type="password" id="admin-confirm-input" placeholder="••••••••" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 text-slate-900 dark:text-white">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 pt-2">
+                    <button type="button" onclick="closeAdminModal()" class="py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold">Cancelar</button>
+                    <button type="submit" id="admin-submit-btn" class="py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-semibold transition-colors shadow-lg shadow-amber-500/20 flex items-center justify-center gap-1.5">
+                        <i class="fas fa-key"></i>
+                        <span>Validar & Entrar</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ================= SLIDE-OVER NAVIGATION DRAWER ================= -->
+    <div id="sidebar-drawer" class="fixed inset-0 z-50 overflow-hidden hidden">
+        <div onclick="closeDrawer()" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm"></div>
+        <div class="fixed inset-y-0 right-0 max-w-full flex pl-10">
+            <div class="w-screen max-w-sm bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col justify-between">
+                
+                <div class="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-xl bg-sky-500/10 text-sky-600 dark:text-sky-400 flex items-center justify-center font-bold">
+                            <i class="fas fa-table"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-extrabold text-base text-slate-900 dark:text-white leading-none">
+                                Data View <span class="text-sky-600 dark:text-sky-400">Mobile</span>
+                            </h3>
+                            <span class="text-[10px] text-slate-400 mt-1 block">Menu de Controle & Navegação</span>
+                        </div>
+                    </div>
+                    <button type="button" onclick="closeDrawer()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <div class="flex-1 overflow-y-auto p-5 space-y-6">
+                    <!-- User Profile Card -->
+                    <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-2">
+                        <div class="flex items-center gap-3">
+                            <div id="drawer-user-avatar" class="w-10 h-10 rounded-xl bg-sky-600 text-white font-bold flex items-center justify-center text-sm shadow-sm">U</div>
+                            <div class="min-w-0">
+                                <h4 id="drawer-user-name" class="font-bold text-xs sm:text-sm text-slate-900 dark:text-white truncate">Usuário</h4>
+                                <p id="drawer-user-email" class="text-[11px] text-slate-500 dark:text-slate-400 truncate">email@exemplo.com</p>
+                            </div>
+                        </div>
+                        <div class="pt-2 border-t border-slate-200/60 dark:border-slate-800/80 flex items-center justify-between text-[11px]">
+                            <span class="text-slate-400">Perfil de Acesso:</span>
+                            <span id="drawer-user-role" class="font-bold">Leitor</span>
+                        </div>
+                    </div>
+
+                    <!-- Navigation -->
+                    <div class="space-y-2">
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 px-1">Navegação Principal</span>
+                        <div class="space-y-1">
+                            <button type="button" onclick="closeDrawer();" class="w-full p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 font-semibold text-xs sm:text-sm flex items-center justify-between">
+                                <div class="flex items-center gap-2.5">
+                                    <i class="fas fa-table text-sky-500"></i>
+                                    <span>Planilhas Disponíveis</span>
+                                </div>
+                                <i class="fas fa-chevron-right text-slate-400 text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- CONFIGURAÇÕES & UTILITÁRIOS -->
+                    <div class="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 px-1">Configurações & Utilitários</span>
+                        <div class="space-y-1">
+                            <button type="button" id="drawer-users-btn" onclick="closeDrawer(); openUserManagementModal();" class="w-full p-3 rounded-xl bg-sky-500/10 hover:bg-sky-500/20 text-sky-600 dark:text-sky-400 font-bold text-xs sm:text-sm flex items-center justify-between hidden">
+                                <div class="flex items-center gap-2.5">
+                                    <i class="fas fa-users text-sky-500"></i>
+                                    <span>Usuários Cadastrados</span>
+                                </div>
+                                <span id="drawer-users-count" class="bg-sky-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">0</span>
+                            </button>
+
+                            <button type="button" id="drawer-install-btn" onclick="closeDrawer(); triggerPWAInstall();" class="w-full p-3 rounded-xl bg-sky-500/10 hover:bg-sky-500/20 text-sky-600 dark:text-sky-400 font-bold text-xs sm:text-sm flex items-center justify-between">
+                                <div class="flex items-center gap-2.5">
+                                    <i class="fas fa-download text-sky-500"></i>
+                                    <span>Instalar Aplicativo</span>
+                                </div>
+                                <span class="text-[10px] bg-sky-600 text-white font-bold px-2 py-0.5 rounded-full">PWA</span>
+                            </button>
+
+                            <button type="button" onclick="toggleDarkMode();" class="w-full p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 font-semibold text-xs sm:text-sm flex items-center justify-between">
+                                <div class="flex items-center gap-2.5">
+                                    <i class="fas fa-moon text-slate-600 dark:text-amber-400"></i>
+                                    <span>Modo Escuro</span>
+                                </div>
+                                <span id="drawer-theme-status" class="text-xs text-slate-400 font-normal">Desativado</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50">
+                    <button type="button" onclick="closeDrawer(); handleLogout();" class="w-full py-3 bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-600 hover:text-white rounded-xl font-semibold text-xs flex items-center justify-center gap-2 transition-colors">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Sair da Conta</span>
+                    </button>
+                </div>
+
             </div>
         </div>
-    </main>
+    </div>
 
-    <!-- Registo automático do Service Worker embutido -->
+    <!-- ================= VIEW SHEET MODAL (GOOGLE SHEETS) ================= -->
+    <div id="view-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden flex flex-col p-2 sm:p-4">
+        <div class="bg-white dark:bg-slate-900 w-full h-full rounded-2xl sm:rounded-3xl flex flex-col overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800">
+            <div class="p-3 sm:p-4 bg-slate-100 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3 shrink-0">
+                <div class="flex items-center gap-2.5 min-w-0">
+                    <div class="w-8 h-8 rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-400 flex items-center justify-center shrink-0">
+                        <i class="fas fa-file-excel"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <h3 id="modal-sheet-title" class="font-bold text-sm sm:text-base text-slate-900 dark:text-white truncate">Planilha</h3>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5 truncate">
+                            <span id="modal-sheet-category">Categoria</span>
+                            <span>·</span>
+                            <span class="text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
+                                <i class="fas fa-lock"></i> Protegido em tempo real
+                            </span>
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-1.5 shrink-0">
+                    <button type="button" onclick="refreshIframe()" class="p-2 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300" title="Recarregar">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                    <button type="button" onclick="openActiveSheetExternal()" class="p-2 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300" title="Abrir em nova aba">
+                        <i class="fas fa-external-link-alt"></i>
+                    </button>
+                    <button type="button" onclick="closeSheetModal()" class="p-2 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500 hover:text-white transition-colors ml-1">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex-1 bg-slate-950 relative overflow-hidden flex flex-col">
+                <iframe id="sheet-iframe" class="w-full h-full border-0 bg-white" src="about:blank" allowfullscreen></iframe>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= RECYCLING BIN / TRASH MODAL ================= -->
+    <div id="trash-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl p-5 sm:p-6 shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col max-h-[85vh]">
+            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3.5 mb-4">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-rose-500/10 text-rose-500 flex items-center justify-center">
+                        <i class="fas fa-trash-alt"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-base text-slate-900 dark:text-white">Lixeira de Reciclagem</h3>
+                        <p id="trash-subtitle" class="text-[11px] text-slate-500 dark:text-slate-400">Itens excluídos temporariamente</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeTrashModal()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div id="trash-list" class="flex-1 overflow-y-auto space-y-3 pr-1 my-1">
+                <!-- Rendered dynamically -->
+            </div>
+
+            <div class="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2 mt-2">
+                <button type="button" onclick="emptyTrashPermanently()" class="text-xs font-semibold text-rose-600 dark:text-rose-400 hover:underline flex items-center gap-1.5">
+                    <i class="fas fa-eraser"></i>
+                    <span>Esvaziar Lixeira</span>
+                </button>
+                <button type="button" onclick="closeTrashModal()" class="px-4 py-2 bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-xl text-xs font-semibold">
+                    Fechar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= USER MANAGEMENT MODAL (ADMIN ONLY) ================= -->
+    <div id="user-mgmt-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-3 sm:p-5">
+        <div class="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-3xl p-5 sm:p-6 shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col max-h-[88vh]">
+            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4 mb-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-sky-500/10 text-sky-600 dark:text-sky-400 flex items-center justify-center font-bold">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-base sm:text-lg text-slate-900 dark:text-white leading-tight">Usuários Cadastrados</h3>
+                        <p id="users-mgmt-subtitle" class="text-xs text-slate-500 dark:text-slate-400">Gerencie permissões e exclua leitores do sistema</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeUserManagementModal()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="relative mb-4">
+                <i class="fas fa-search absolute left-3.5 top-3 text-slate-400 text-sm"></i>
+                <input type="text" id="users-search-input" oninput="renderUsersList()" placeholder="Pesquisar usuário por nome ou e-mail..." class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl pl-10 pr-4 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 text-slate-900 dark:text-white placeholder-slate-400">
+            </div>
+
+            <div id="users-list" class="flex-1 overflow-y-auto pr-1 space-y-2 my-1">
+                <!-- Rendered dynamically -->
+            </div>
+
+            <div class="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between mt-2">
+                <p class="text-[11px] text-slate-400">Usuários excluídos perdem o acesso ao aplicativo imediatamente.</p>
+                <button type="button" onclick="closeUserManagementModal()" class="px-4 py-2 bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-xl text-xs font-semibold">
+                    Fechar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= iOS SAFARI PWA INSTALL GUIDE MODAL ================= -->
+    <div id="ios-install-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 w-full max-w-sm rounded-3xl p-6 shadow-2xl border border-sky-500/30 flex flex-col space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-sky-500/10 text-sky-600 dark:text-sky-400 flex items-center justify-center text-base">
+                        <i class="fas fa-mobile-screen"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-sm text-slate-900 dark:text-white">Instalar no iPhone / iPad</h3>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400">Como adicionar à Tela de Início</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeIOSGuideModal()" class="p-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="space-y-3 text-xs text-slate-600 dark:text-slate-300">
+                <div class="flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-950/70 rounded-2xl border border-slate-200 dark:border-slate-800">
+                    <span class="w-6 h-6 rounded-full bg-sky-600 text-white font-bold flex items-center justify-center text-xs shrink-0">1</span>
+                    <p class="mt-0.5">No navegador Safari, toque no ícone de <strong>Compartilhar</strong> <i class="fas fa-arrow-up-from-bracket text-sky-500"></i> na barra inferior.</p>
+                </div>
+                <div class="flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-950/70 rounded-2xl border border-slate-200 dark:border-slate-800">
+                    <span class="w-6 h-6 rounded-full bg-sky-600 text-white font-bold flex items-center justify-center text-xs shrink-0">2</span>
+                    <p class="mt-0.5">Role as opções para cima e selecione <strong>Adicionar à Tela de Início</strong> <i class="fas fa-plus-square text-sky-500"></i>.</p>
+                </div>
+                <div class="flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-950/70 rounded-2xl border border-slate-200 dark:border-slate-800">
+                    <span class="w-6 h-6 rounded-full bg-sky-600 text-white font-bold flex items-center justify-center text-xs shrink-0">3</span>
+                    <p class="mt-0.5">Confirme tocando em <strong>Adicionar</strong> no canto superior direito.</p>
+                </div>
+            </div>
+
+            <button type="button" onclick="closeIOSGuideModal()" class="w-full py-2.5 bg-sky-600 hover:bg-sky-700 text-white rounded-xl text-xs font-semibold shadow-md shadow-sky-500/20 transition-all">
+                Entendi
+            </button>
+        </div>
+    </div>
+
+    <!-- ================= JAVASCRIPT APPLICATION LOGIC ================= -->
     <script>
+        // ================= PWA SERVICE WORKER REGISTRATION (IMMEDIATE) =================
+        // Registrado logo no início da execução em JavaScript para reconhecimento imediato do PWA pelo Chrome
         if ('serviceWorker' in navigator) {
-            const swCode = `
-                self.addEventListener('install', (e) => { self.skipWaiting(); });
-                self.addEventListener('fetch', (e) => { e.respondWith(fetch(e.request)); });
-            `;
-            const blob = new Blob([swCode], { type: 'text/javascript' });
-            const swUrl = URL.createObjectURL(blob);
-            navigator.serviceWorker.register(swUrl).catch((err) => {
-                console.error("Erro no Service Worker:", err);
+            navigator.serviceWorker.register('sw.js')
+                .then(function(reg) {
+                    console.log('[PWA] Service Worker registrado com sucesso:', reg.scope);
+                })
+                .catch(function(err) {
+                    console.warn('[PWA] Falha ao registrar Service Worker:', err);
+                });
+        }
+
+        // --- CONSTANTS & LOCAL STORAGE KEYS ---
+        const MASTER_ADMIN_EMAIL = "jcs.oficial38@gmail.com";
+        const DEFAULT_ADMIN_PASSWORDS = ["admin", "admin123", "383838", "jcs38", "123456"];
+        
+        const STORAGE_KEY_USER = "dataview_user_v2";
+        const STORAGE_KEY_SHEETS = "dataview_sheets_v2";
+        const STORAGE_KEY_TRASH = "dataview_trash_v2";
+        const STORAGE_KEY_THEME = "dataview_theme_v2";
+        const STORAGE_KEY_REGISTERED_USERS = "dataview_registered_users_v2";
+        const STORAGE_KEY_DELETED_USERS = "dataview_deleted_users_v2";
+        const STORAGE_KEY_ADMIN_PASS = "dataview_admin_password_v2";
+
+        const DEFAULT_SHEETS = [
+            {
+                id: "sheet_1",
+                title: "Escala de Folga & Plantão Mês",
+                url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vR8gMdeGjK8Qx8-X0_sample_escala/pubhtml?widget=true&headers=false",
+                category: "Escala & Plantão",
+                description: "Escala completa de horários, turnos, plantões e folgas da equipe.",
+                createdAt: "2026-10-01T08:00:00.000Z",
+                updatedAt: "2026-10-24T14:30:00.000Z",
+                viewsCount: 142
+            },
+            {
+                id: "sheet_2",
+                title: "Controle de Vendas & Metas Mensais",
+                url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vT2Y9a_sample_vendas/pubhtml?widget=true&headers=false",
+                category: "Vendas & Metas",
+                description: "Acompanhamento diário de faturamento, metas comerciais e comissões.",
+                createdAt: "2026-10-05T10:15:00.000Z",
+                updatedAt: "2026-10-25T09:10:00.000Z",
+                viewsCount: 98
+            },
+            {
+                id: "sheet_3",
+                title: "Checklist de Estoque & Suprimentos",
+                url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vU3Z8b_sample_estoque/pubhtml?widget=true&headers=false",
+                category: "Estoque & Suprimentos",
+                description: "Inventário atualizado de insumos, materiais e alertas de reposição.",
+                createdAt: "2026-10-10T11:20:00.000Z",
+                updatedAt: "2026-10-23T16:45:00.000Z",
+                viewsCount: 76
+            },
+            {
+                id: "sheet_4",
+                title: "Relatório Financeiro Trimestral (DRE & Fluxo de Caixa)",
+                url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vW4A7c_sample_financeiro/pubhtml?widget=true&headers=false",
+                category: "Financeiro",
+                description: "Visão consolidada de receitas, custos fixos, variáveis e fluxo de caixa.",
+                createdAt: "2026-10-15T15:00:00.000Z",
+                updatedAt: "2026-10-25T07:00:00.000Z",
+                viewsCount: 215
+            }
+        ];
+
+        const INITIAL_REGISTERED_USERS = [
+            {
+                id: "usr_1",
+                name: "Carlos Silva",
+                email: "carlos.silva@empresa.com",
+                role: "reader",
+                createdAt: "2026-10-12T09:30:00.000Z"
+            },
+            {
+                id: "usr_2",
+                name: "Mariana Oliveira",
+                email: "mariana.oliveira@empresa.com",
+                role: "reader",
+                createdAt: "2026-10-15T11:20:00.000Z"
+            }
+        ];
+
+        // --- GLOBAL STATE ---
+        let currentUser = null;
+        let sheetsData = [];
+        let trashData = [];
+        let registeredUsersData = [];
+        let deletedEmailsData = [];
+        let activeModalSheet = null;
+
+        // --- PWA INSTALLATION PROMPT HANDLING ---
+        let deferredPrompt = null;
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+        const isIOS = /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            showInstallButtons();
+        });
+
+        window.addEventListener('appinstalled', () => {
+            deferredPrompt = null;
+            hideInstallButtons();
+            showToast('Data View Mobile instalado com sucesso!', 'success');
+        });
+
+        function showInstallButtons() {
+            if (isStandalone) return;
+            const headerBtn = document.getElementById('header-install-btn');
+            const drawerBtn = document.getElementById('drawer-install-btn');
+            if (headerBtn) headerBtn.classList.remove('hidden');
+            if (drawerBtn) drawerBtn.classList.remove('hidden');
+        }
+
+        function hideInstallButtons() {
+            const headerBtn = document.getElementById('header-install-btn');
+            const drawerBtn = document.getElementById('drawer-install-btn');
+            if (headerBtn) headerBtn.classList.add('hidden');
+            if (drawerBtn) drawerBtn.classList.add('hidden');
+        }
+
+        async function triggerPWAInstall() {
+            if (isStandalone) {
+                showToast('O aplicativo já está instalado no seu dispositivo.', 'info');
+                return;
+            }
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    hideInstallButtons();
+                    showToast('Instalando Data View Mobile...', 'success');
+                }
+                deferredPrompt = null;
+            } else if (isIOS) {
+                openIOSGuideModal();
+            } else {
+                showToast('No Chrome móvel, toque no menu (⋮) e selecione "Instalar aplicativo" ou "Adicionar à tela inicial".', 'info');
+            }
+        }
+
+        function openIOSGuideModal() {
+            document.getElementById('ios-install-modal').classList.remove('hidden');
+        }
+
+        function closeIOSGuideModal() {
+            document.getElementById('ios-install-modal').classList.add('hidden');
+        }
+
+        function initPWAStatus() {
+            if (isStandalone) {
+                hideInstallButtons();
+            } else if (isIOS) {
+                const headerBtn = document.getElementById('header-install-btn');
+                const drawerBtn = document.getElementById('drawer-install-btn');
+                if (headerBtn) headerBtn.classList.remove('hidden');
+                if (drawerBtn) drawerBtn.classList.remove('hidden');
+            }
+        }
+
+        // --- INIT ON LOAD ---
+        window.onload = function() {
+            initTheme();
+            initDatabase();
+            checkAuthState();
+            initPWAStatus();
+        };
+
+        function initTheme() {
+            const savedTheme = localStorage.getItem(STORAGE_KEY_THEME);
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+                document.documentElement.classList.add('dark');
+                document.getElementById('theme-icon').className = 'fas fa-sun text-amber-400 text-sm';
+                document.getElementById('drawer-theme-status').textContent = 'Ativado';
+            } else {
+                document.documentElement.classList.remove('dark');
+                document.getElementById('theme-icon').className = 'fas fa-moon text-slate-600 text-sm';
+                document.getElementById('drawer-theme-status').textContent = 'Desativado';
+            }
+        }
+
+        function toggleDarkMode() {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem(STORAGE_KEY_THEME, 'light');
+                document.getElementById('theme-icon').className = 'fas fa-moon text-slate-600 text-sm';
+                document.getElementById('drawer-theme-status').textContent = 'Desativado';
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem(STORAGE_KEY_THEME, 'dark');
+                document.getElementById('theme-icon').className = 'fas fa-sun text-amber-400 text-sm';
+                document.getElementById('drawer-theme-status').textContent = 'Ativado';
+            }
+        }
+
+        function initDatabase() {
+            // Deleted Users
+            try {
+                deletedEmailsData = JSON.parse(localStorage.getItem(STORAGE_KEY_DELETED_USERS)) || [];
+            } catch(e) {
+                deletedEmailsData = [];
+            }
+
+            // Registered Users
+            try {
+                const savedReg = localStorage.getItem(STORAGE_KEY_REGISTERED_USERS);
+                registeredUsersData = savedReg ? JSON.parse(savedReg) : [...INITIAL_REGISTERED_USERS];
+            } catch(e) {
+                registeredUsersData = [...INITIAL_REGISTERED_USERS];
+            }
+
+            // Sheets
+            try {
+                const savedSheets = localStorage.getItem(STORAGE_KEY_SHEETS);
+                sheetsData = savedSheets ? JSON.parse(savedSheets) : [...DEFAULT_SHEETS];
+            } catch(e) {
+                sheetsData = [...DEFAULT_SHEETS];
+            }
+
+            // Trash
+            try {
+                trashData = JSON.parse(localStorage.getItem(STORAGE_KEY_TRASH)) || [];
+            } catch(e) {
+                trashData = [];
+            }
+        }
+
+        function checkAuthState() {
+            const savedUser = localStorage.getItem(STORAGE_KEY_USER);
+            if (savedUser) {
+                try {
+                    const u = JSON.parse(savedUser);
+                    const emailClean = (u.email || '').trim().toLowerCase();
+
+                    if (deletedEmailsData.includes(emailClean) && emailClean !== MASTER_ADMIN_EMAIL.toLowerCase()) {
+                        currentUser = null;
+                        localStorage.removeItem(STORAGE_KEY_USER);
+                        renderAuthScreen();
+                        return;
+                    }
+
+                    const isMasterAdmin = (emailClean === MASTER_ADMIN_EMAIL.toLowerCase());
+                    currentUser = {
+                        email: emailClean,
+                        name: isMasterAdmin ? "Administrador Mestre" : (u.name || emailClean.split('@')[0]),
+                        role: isMasterAdmin ? "admin" : "reader"
+                    };
+
+                    localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(currentUser));
+                    renderDashboardScreen();
+                    return;
+                } catch(e) {
+                    currentUser = null;
+                }
+            }
+            renderAuthScreen();
+        }
+
+        // --- AUTH & LOGIN LOGIC ---
+        function showAuthMode(mode) {
+            if (mode === 'register') {
+                document.getElementById('login-card').classList.add('hidden');
+                document.getElementById('register-card').classList.remove('hidden');
+            } else {
+                document.getElementById('register-card').classList.add('hidden');
+                document.getElementById('login-card').classList.remove('hidden');
+            }
+        }
+
+        function handleLoginSubmit(e) {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value.trim().toLowerCase();
+            const password = document.getElementById('login-password').value.trim();
+
+            if (!email || !password) {
+                showToast("Preencha e-mail e senha para entrar!", "error");
+                return;
+            }
+
+            if (deletedEmailsData.includes(email) && email !== MASTER_ADMIN_EMAIL.toLowerCase()) {
+                showToast("Acesso negado: esta conta foi removida pelo Administrador Mestre.", "error");
+                return;
+            }
+
+            const isAdmin = (email === MASTER_ADMIN_EMAIL.toLowerCase());
+
+            if (isAdmin) {
+                const savedAdminPass = localStorage.getItem(STORAGE_KEY_ADMIN_PASS);
+                const validPasswords = savedAdminPass ? [savedAdminPass, ...DEFAULT_ADMIN_PASSWORDS] : DEFAULT_ADMIN_PASSWORDS;
+                const isValid = validPasswords.some(p => p.toLowerCase() === password.toLowerCase());
+                
+                if (!isValid) {
+                    showToast("Senha incorreta para a conta de Administrador Mestre!", "error");
+                    return;
+                }
+            }
+
+            currentUser = {
+                email: email,
+                name: isAdmin ? "Administrador Mestre" : email.split('@')[0],
+                role: isAdmin ? "admin" : "reader"
+            };
+
+            // Auto-register reader if not present
+            if (!isAdmin && !registeredUsersData.some(u => u.email.toLowerCase() === email)) {
+                registeredUsersData.unshift({
+                    id: "usr_" + Date.now(),
+                    name: email.split('@')[0],
+                    email: email,
+                    role: "reader",
+                    createdAt: new Date().toISOString()
+                });
+                localStorage.setItem(STORAGE_KEY_REGISTERED_USERS, JSON.stringify(registeredUsersData));
+            }
+
+            localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(currentUser));
+            showToast(isAdmin ? "Bem-vindo, Administrador Mestre!" : "Login realizado com sucesso!");
+            renderDashboardScreen();
+        }
+
+        function handleRegisterSubmit(e) {
+            e.preventDefault();
+            const name = document.getElementById('reg-name').value.trim();
+            const email = document.getElementById('reg-email').value.trim().toLowerCase();
+            const password = document.getElementById('reg-password').value.trim();
+
+            if (!name || !email || !password) {
+                showToast("Preencha todos os campos do formulário!", "error");
+                return;
+            }
+
+            if (deletedEmailsData.includes(email) && email !== MASTER_ADMIN_EMAIL.toLowerCase()) {
+                showToast("Este e-mail foi desativado anteriormente pelo Administrador.", "error");
+                return;
+            }
+
+            const isAdmin = (email === MASTER_ADMIN_EMAIL.toLowerCase());
+
+            currentUser = {
+                email: email,
+                name: isAdmin ? "Administrador Mestre" : name,
+                role: isAdmin ? "admin" : "reader"
+            };
+
+            if (!isAdmin && !registeredUsersData.some(u => u.email.toLowerCase() === email)) {
+                registeredUsersData.unshift({
+                    id: "usr_" + Date.now(),
+                    name: name,
+                    email: email,
+                    role: "reader",
+                    createdAt: new Date().toISOString()
+                });
+                localStorage.setItem(STORAGE_KEY_REGISTERED_USERS, JSON.stringify(registeredUsersData));
+            }
+
+            localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(currentUser));
+            showToast("Conta criada com sucesso!");
+            renderDashboardScreen();
+        }
+
+        function handleLogout() {
+            localStorage.removeItem(STORAGE_KEY_USER);
+            currentUser = null;
+            renderAuthScreen();
+            showToast("Sessão encerrada com sucesso!", "info");
+        }
+
+        // --- ADMIN MODAL & FIRST ACCESS CREATION ---
+        function openAdminModal() {
+            const savedPass = localStorage.getItem(STORAGE_KEY_ADMIN_PASS);
+            const hasPass = Boolean(savedPass && savedPass.trim().length > 0);
+
+            const title = document.getElementById('admin-modal-title');
+            const desc = document.getElementById('admin-modal-desc');
+            const icon = document.getElementById('admin-modal-icon');
+            const confirmBox = document.getElementById('admin-confirm-container');
+            const submitBtn = document.getElementById('admin-submit-btn');
+
+            document.getElementById('admin-password-input').value = '';
+            document.getElementById('admin-confirm-input').value = '';
+
+            if (!hasPass) {
+                title.textContent = "Criar Senha de Administrador Mestre";
+                desc.textContent = "Primeiro Acesso: Crie uma senha de acesso restrito (mínimo de 4 dígitos)";
+                icon.innerHTML = `<i class="fas fa-shield-alt"></i>`;
+                confirmBox.classList.remove('hidden');
+                submitBtn.innerHTML = `<i class="fas fa-key"></i> <span>Salvar & Entrar</span>`;
+            } else {
+                title.textContent = "Acesso Restrito Admin";
+                desc.textContent = "Digite a Senha do Administrador Mestre cadastrada";
+                icon.innerHTML = `<i class="fas fa-key"></i>`;
+                confirmBox.classList.add('hidden');
+                submitBtn.innerHTML = `<i class="fas fa-key"></i> <span>Validar & Entrar</span>`;
+            }
+
+            document.getElementById('admin-modal').classList.remove('hidden');
+        }
+
+        function closeAdminModal() {
+            document.getElementById('admin-modal').classList.add('hidden');
+        }
+
+        function handleAdminModalSubmit(e) {
+            e.preventDefault();
+            const savedPass = localStorage.getItem(STORAGE_KEY_ADMIN_PASS);
+            const hasPass = Boolean(savedPass && savedPass.trim().length > 0);
+
+            const passInput = document.getElementById('admin-password-input').value.trim();
+
+            if (!hasPass) {
+                // First Access
+                const confirmInput = document.getElementById('admin-confirm-input').value.trim();
+
+                if (!passInput || passInput.length < 4) {
+                    showToast("A senha de Administrador deve ter no mínimo 4 caracteres!", "error");
+                    return;
+                }
+
+                if (passInput !== confirmInput) {
+                    showToast("As senhas não coincidem! Digite a mesma senha nos dois campos.", "error");
+                    return;
+                }
+
+                localStorage.setItem(STORAGE_KEY_ADMIN_PASS, passInput);
+                currentUser = {
+                    email: MASTER_ADMIN_EMAIL,
+                    name: "Administrador Mestre",
+                    role: "admin"
+                };
+
+                localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(currentUser));
+                showToast("Senha cadastrada com sucesso! Bem-vindo, Administrador Mestre!");
+                closeAdminModal();
+                renderDashboardScreen();
+                return;
+            }
+
+            // Existing Password
+            if (!passInput) {
+                showToast("Por favor, digite a senha de Administrador!", "error");
+                return;
+            }
+
+            const validPasswords = savedPass ? [savedPass, ...DEFAULT_ADMIN_PASSWORDS] : DEFAULT_ADMIN_PASSWORDS;
+            const isValid = validPasswords.some(p => p.toLowerCase() === passInput.toLowerCase());
+
+            if (!isValid) {
+                showToast("Senha de Administrador incorreta! Acesso negado.", "error");
+                document.getElementById('admin-password-input').value = '';
+                return;
+            }
+
+            currentUser = {
+                email: MASTER_ADMIN_EMAIL,
+                name: "Administrador Mestre",
+                role: "admin"
+            };
+
+            localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(currentUser));
+            showToast("Acesso concedido: Bem-vindo, Administrador Mestre!");
+            closeAdminModal();
+            renderDashboardScreen();
+        }
+
+        // --- RENDER SCREENS ---
+        function renderAuthScreen() {
+            document.getElementById('auth-container').classList.remove('hidden');
+            document.getElementById('app-dashboard').classList.add('hidden');
+            showAuthMode('login');
+        }
+
+        function renderDashboardScreen() {
+            document.getElementById('auth-container').classList.add('hidden');
+            document.getElementById('app-dashboard').classList.remove('hidden');
+
+            const isAdmin = (currentUser && currentUser.role === 'admin');
+
+            // Header User Badge
+            const userRoleBadge = document.getElementById('user-role-badge');
+            if (isAdmin) {
+                userRoleBadge.innerHTML = `<span class="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1"><i class="fas fa-shield-alt"></i> Administrador Mestre</span>`;
+                document.getElementById('admin-panel').classList.remove('hidden');
+                document.getElementById('mobile-add-btn').classList.remove('hidden');
+                document.getElementById('mobile-trash-btn').classList.remove('hidden');
+            } else {
+                userRoleBadge.innerHTML = `<span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1 truncate max-w-[180px] sm:max-w-none">Leitor: ${escapeHTML(currentUser.email)}</span>`;
+                document.getElementById('admin-panel').classList.add('hidden');
+                document.getElementById('mobile-add-btn').classList.add('hidden');
+                document.getElementById('mobile-trash-btn').classList.add('hidden');
+            }
+
+            // Role Status Text
+            const roleStatusText = document.getElementById('role-status-text');
+            if (isAdmin) {
+                roleStatusText.innerHTML = `<span class="text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1"><i class="fas fa-shield-alt"></i> Edição de Links</span>`;
+            } else {
+                roleStatusText.innerHTML = `<span class="flex items-center gap-1"><i class="fas fa-lock text-sky-500"></i> Somente Leitura</span>`;
+            }
+
+            // Footer Text
+            const footerText = document.getElementById('footer-text');
+            if (isAdmin) {
+                footerText.innerHTML = `<strong class="text-emerald-600 dark:text-emerald-400 font-semibold">Modo Administrador Mestre Ativo:</strong> Controle total de inclusão, edição, usuários e lixeira.`;
+            } else {
+                footerText.innerHTML = `<strong class="text-sky-600 dark:text-sky-400 font-semibold">Modo Leitor Ativo:</strong> Visualização em tempo real sem permissão de alteração.`;
+            }
+
+            // Update Drawer Info
+            document.getElementById('drawer-user-name').textContent = currentUser.name;
+            document.getElementById('drawer-user-email').textContent = currentUser.email;
+            document.getElementById('drawer-user-avatar').textContent = currentUser.name.charAt(0).toUpperCase();
+
+            const drawerRole = document.getElementById('drawer-user-role');
+            const drawerUsersBtn = document.getElementById('drawer-users-btn');
+            if (isAdmin) {
+                drawerRole.className = "text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1";
+                drawerRole.innerHTML = `<i class="fas fa-shield-alt"></i> Admin Mestre`;
+                drawerUsersBtn.classList.remove('hidden');
+                document.getElementById('drawer-users-count').textContent = registeredUsersData.length;
+            } else {
+                drawerRole.className = "text-sky-600 dark:text-sky-400 font-bold flex items-center gap-1";
+                drawerRole.innerHTML = `<i class="fas fa-user-check"></i> Leitor`;
+                drawerUsersBtn.classList.add('hidden');
+            }
+
+            renderSheetsList();
+            updateTrashBadges();
+        }
+
+        // --- SHEET LIST & EXCEL / ONEDRIVE DIRECT OPEN ---
+        function isExcelOrOfficeUrl(url) {
+            if (!url) return false;
+            const u = url.toLowerCase();
+            return (
+                u.includes('onedrive.live.com') ||
+                u.includes('1drv.ms') ||
+                u.includes('office.com') ||
+                u.includes('officeapps.live.com') ||
+                u.includes('sharepoint.com') ||
+                u.includes('excel.officeapps') ||
+                u.includes('view.aspx') ||
+                u.endsWith('.xlsx') ||
+                u.endsWith('.xls') ||
+                u.endsWith('.csv')
+            );
+        }
+
+        function renderSheetsList() {
+            const container = document.getElementById('sheets-list');
+            const searchVal = document.getElementById('search-query').value.trim().toLowerCase();
+            container.innerHTML = '';
+
+            const filtered = sheetsData.filter(s => {
+                if (!searchVal) return true;
+                return (
+                    s.title.toLowerCase().includes(searchVal) ||
+                    (s.description && s.description.toLowerCase().includes(searchVal)) ||
+                    (s.category && s.category.toLowerCase().includes(searchVal))
+                );
             });
+
+            document.getElementById('sheets-count').textContent = filtered.length;
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="bg-white dark:bg-slate-900 rounded-3xl p-8 text-center border border-slate-200 dark:border-slate-800 my-4">
+                        <i class="fas fa-file-csv text-4xl text-slate-300 dark:text-slate-700 mb-3"></i>
+                        <h3 class="font-bold text-sm text-slate-700 dark:text-slate-300">Nenhuma planilha encontrada</h3>
+                        <p class="text-xs text-slate-400 dark:text-slate-500 mt-1 max-w-sm mx-auto">
+                            ${searchVal ? `Nenhum resultado para "${escapeHTML(searchVal)}". Tente outro termo.` : 'Nenhuma planilha cadastrada até o momento.'}
+                        </p>
+                    </div>
+                `;
+                return;
+            }
+
+            const isAdmin = (currentUser && currentUser.role === 'admin');
+
+            filtered.forEach((sheet, index) => {
+                const isExcel = isExcelOrOfficeUrl(sheet.url);
+                const formattedDate = new Date(sheet.updatedAt).toLocaleDateString('pt-BR', {
+                    day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
+                });
+
+                const card = document.createElement('div');
+                card.className = "bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200/90 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-sky-500/50 dark:hover:border-sky-500/50 transition-all group";
+
+                card.innerHTML = `
+                    <div onclick="handleOpenSheet('${sheet.id}')" class="flex items-start sm:items-center gap-3.5 flex-1 min-w-0 cursor-pointer">
+                        <div class="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform ${isExcel ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-sky-500/10 text-sky-600 dark:text-sky-400'}">
+                            <i class="fas fa-file-excel text-xl"></i>
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <h3 class="font-bold text-sm sm:text-base text-slate-900 dark:text-white truncate group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors">${escapeHTML(sheet.title)}</h3>
+                            ${sheet.description ? `<p class="text-xs text-slate-500 dark:text-slate-400 line-clamp-1 mb-1.5">${escapeHTML(sheet.description)}</p>` : ''}
+                            <div class="flex items-center gap-2 text-[11px] text-slate-400 dark:text-slate-500 flex-wrap">
+                                <span class="font-medium text-sky-600 dark:text-sky-400">${escapeHTML(sheet.category)}</span>
+                                <span>·</span>
+                                <span><i class="fas fa-calendar-alt text-slate-400"></i> ${formattedDate}</span>
+                                <span>·</span>
+                                <span>${sheet.viewsCount || 0} visualizações</span>
+                                <span>·</span>
+                                ${isExcel ? `<span class="text-emerald-600 dark:text-emerald-400 font-medium">Excel / OneDrive ↗</span>` : `<span class="text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Tempo Real</span>`}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-end gap-1.5 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100 dark:border-slate-800">
+                        <button type="button" onclick="copySheetLink(event, '${sheet.url}')" class="p-2 sm:p-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800" title="Copiar Link">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                        <button type="button" onclick="handleOpenSheet('${sheet.id}')" class="px-3.5 py-2 rounded-xl font-semibold text-xs flex items-center gap-1.5 transition-all ${isExcel ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-600 hover:text-white' : 'bg-sky-500/10 text-sky-600 dark:text-sky-400 hover:bg-sky-600 hover:text-white'}">
+                            <i class="fas ${isExcel ? 'fa-external-link-alt' : 'fa-eye'}"></i>
+                            <span>${isExcel ? 'Abrir ↗' : 'Abrir'}</span>
+                        </button>
+                        ${isAdmin ? `<button type="button" onclick="moveSheetToTrash(event, '${sheet.id}')" class="p-2 sm:p-2.5 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-600 hover:text-white ml-1" title="Mover para Lixeira"><i class="fas fa-trash-alt"></i></button>` : ''}
+                    </div>
+                `;
+
+                container.appendChild(card);
+            });
+        }
+
+        function handleOpenSheet(sheetId) {
+            const sheet = sheetsData.find(s => s.id === sheetId);
+            if (!sheet) return;
+
+            sheet.viewsCount = (sheet.viewsCount || 0) + 1;
+            localStorage.setItem(STORAGE_KEY_SHEETS, JSON.stringify(sheetsData));
+
+            if (isExcelOrOfficeUrl(sheet.url)) {
+                showToast(`Abrindo ${sheet.title} no Excel em nova aba...`, "info");
+                window.open(sheet.url, '_blank', 'noopener,noreferrer');
+            } else {
+                activeModalSheet = sheet;
+                let formattedUrl = sheet.url;
+                const isAdmin = (currentUser && currentUser.role === 'admin');
+
+                if (formattedUrl.includes('docs.google.com/spreadsheets')) {
+                    if (!isAdmin) {
+                        if (formattedUrl.includes('/edit')) formattedUrl = formattedUrl.replace(/\/edit.*$/, '/htmlview');
+                        else if (!formattedUrl.includes('/pubhtml') && !formattedUrl.includes('/htmlview')) formattedUrl += '/htmlview';
+                    } else {
+                        if (formattedUrl.includes('/edit')) formattedUrl = formattedUrl.replace(/\/edit.*$/, '/preview');
+                    }
+                }
+
+                document.getElementById('modal-sheet-title').textContent = sheet.title;
+                document.getElementById('modal-sheet-category').textContent = sheet.category;
+                document.getElementById('sheet-iframe').src = formattedUrl;
+                document.getElementById('view-modal').classList.remove('hidden');
+            }
+            renderSheetsList();
+        }
+
+        function closeSheetModal() {
+            document.getElementById('view-modal').classList.add('hidden');
+            document.getElementById('sheet-iframe').src = 'about:blank';
+            activeModalSheet = null;
+        }
+
+        function refreshIframe() {
+            if (!activeModalSheet) return;
+            const iframe = document.getElementById('sheet-iframe');
+            const currentSrc = iframe.src;
+            iframe.src = 'about:blank';
+            setTimeout(() => { iframe.src = currentSrc; }, 100);
+            showToast("Atualizando visualização da planilha...", "info");
+        }
+
+        function openActiveSheetExternal() {
+            if (!activeModalSheet) return;
+            window.open(activeModalSheet.url, '_blank', 'noopener,noreferrer');
+        }
+
+        function copySheetLink(event, url) {
+            if (event) event.stopPropagation();
+            navigator.clipboard.writeText(url);
+            showToast("Link copiado para a área de transferência!");
+        }
+
+        function handleAddNewSheet(e) {
+            e.preventDefault();
+            if (!currentUser || currentUser.role !== 'admin') return;
+
+            const title = document.getElementById('sheet-title').value.trim();
+            const category = document.getElementById('sheet-category').value;
+            const url = document.getElementById('sheet-url').value.trim();
+            const description = document.getElementById('sheet-desc').value.trim();
+
+            if (!title || !url) {
+                showToast("Por favor, informe o título e o link da planilha!", "error");
+                return;
+            }
+
+            const now = new Date().toISOString();
+            const newSheet = {
+                id: "sheet_" + Date.now(),
+                title: title,
+                category: category,
+                url: url,
+                description: description || undefined,
+                createdAt: now,
+                updatedAt: now,
+                viewsCount: 0
+            };
+
+            sheetsData.unshift(newSheet);
+            localStorage.setItem(STORAGE_KEY_SHEETS, JSON.stringify(sheetsData));
+
+            document.getElementById('sheet-title').value = '';
+            document.getElementById('sheet-url').value = '';
+            document.getElementById('sheet-desc').value = '';
+
+            showToast("Planilha salva e publicada com sucesso!");
+            renderSheetsList();
+        }
+
+        // --- TRASH SYSTEM ---
+        function moveSheetToTrash(event, sheetId) {
+            if (event) event.stopPropagation();
+            if (!currentUser || currentUser.role !== 'admin') return;
+
+            const idx = sheetsData.findIndex(s => s.id === sheetId);
+            if (idx === -1) return;
+
+            const deletedItem = sheetsData.splice(idx, 1)[0];
+            deletedItem.deletedAt = new Date().toISOString();
+            trashData.unshift(deletedItem);
+
+            localStorage.setItem(STORAGE_KEY_SHEETS, JSON.stringify(sheetsData));
+            localStorage.setItem(STORAGE_KEY_TRASH, JSON.stringify(trashData));
+
+            showToast("Planilha movida para a Lixeira!", "warning");
+            renderSheetsList();
+            updateTrashBadges();
+            if (!document.getElementById('trash-modal').classList.contains('hidden')) {
+                renderTrashList();
+            }
+        }
+
+        function restoreSheetFromTrash(trashId) {
+            const idx = trashData.findIndex(t => t.id === trashId);
+            if (idx === -1) return;
+
+            const item = trashData.splice(idx, 1)[0];
+            delete item.deletedAt;
+            sheetsData.unshift(item);
+
+            localStorage.setItem(STORAGE_KEY_SHEETS, JSON.stringify(sheetsData));
+            localStorage.setItem(STORAGE_KEY_TRASH, JSON.stringify(trashData));
+
+            showToast("Planilha restaurada com sucesso!");
+            renderSheetsList();
+            updateTrashBadges();
+            renderTrashList();
+        }
+
+        function deleteSheetPermanently(trashId) {
+            const idx = trashData.findIndex(t => t.id === trashId);
+            if (idx === -1) return;
+
+            trashData.splice(idx, 1);
+            localStorage.setItem(STORAGE_KEY_TRASH, JSON.stringify(trashData));
+
+            showToast("Item excluído definitivamente!", "info");
+            updateTrashBadges();
+            renderTrashList();
+        }
+
+        function emptyTrashPermanently() {
+            if (trashData.length === 0) return;
+            trashData = [];
+            localStorage.setItem(STORAGE_KEY_TRASH, JSON.stringify(trashData));
+
+            showToast("Lixeira esvaziada com sucesso!", "info");
+            updateTrashBadges();
+            renderTrashList();
+        }
+
+        function updateTrashBadges() {
+            const count = trashData.length;
+            const adminBadge = document.getElementById('admin-trash-badge');
+            const mobileBadge = document.getElementById('mobile-trash-badge');
+
+            if (adminBadge) {
+                if (count > 0) {
+                    adminBadge.textContent = count;
+                    adminBadge.classList.remove('hidden');
+                } else {
+                    adminBadge.classList.add('hidden');
+                }
+            }
+
+            if (mobileBadge) {
+                if (count > 0) {
+                    mobileBadge.textContent = count;
+                    mobileBadge.classList.remove('hidden');
+                } else {
+                    mobileBadge.classList.add('hidden');
+                }
+            }
+        }
+
+        function renderTrashList() {
+            const container = document.getElementById('trash-list');
+            container.innerHTML = '';
+
+            document.getElementById('trash-subtitle').textContent = `Itens excluídos temporariamente (${trashData.length})`;
+
+            if (trashData.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-10 px-4 text-slate-400 dark:text-slate-500">
+                        <i class="fas fa-trash-alt text-3xl mb-2 opacity-30"></i>
+                        <p class="text-xs font-medium">A lixeira está vazia.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            trashData.forEach((item) => {
+                const div = document.createElement('div');
+                div.className = "bg-slate-50 dark:bg-slate-950/80 rounded-2xl p-3.5 border border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3";
+                div.innerHTML = `
+                    <div class="flex items-center gap-3 min-w-0">
+                        <div class="w-9 h-9 rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-500 flex items-center justify-center shrink-0">
+                            <i class="fas fa-file-excel"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <h4 class="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">${escapeHTML(item.title)}</h4>
+                            <p class="text-[10px] text-slate-400">Excluído em ${new Date(item.deletedAt).toLocaleDateString('pt-BR')}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-1.5 shrink-0">
+                        <button type="button" onclick="restoreSheetFromTrash('${item.id}')" class="px-2.5 py-1.5 bg-sky-500/10 text-sky-600 dark:text-sky-400 hover:bg-sky-600 hover:text-white rounded-xl text-xs font-semibold flex items-center gap-1">
+                            <i class="fas fa-undo"></i> Restaurar
+                        </button>
+                        <button type="button" onclick="deleteSheetPermanently('${item.id}')" class="p-1.5 bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-600 hover:text-white rounded-xl">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function openTrashModal() {
+            renderTrashList();
+            document.getElementById('trash-modal').classList.remove('hidden');
+        }
+
+        function closeTrashModal() {
+            document.getElementById('trash-modal').classList.add('hidden');
+        }
+
+        // --- USER MANAGEMENT SYSTEM ---
+        function renderUsersList() {
+            const container = document.getElementById('users-list');
+            const searchVal = document.getElementById('users-search-input').value.trim().toLowerCase();
+            container.innerHTML = '';
+
+            const filtered = registeredUsersData.filter(u => {
+                if (!searchVal) return true;
+                return u.name.toLowerCase().includes(searchVal) || u.email.toLowerCase().includes(searchVal);
+            });
+
+            document.getElementById('users-mgmt-subtitle').textContent = `Gerencie permissões e exclua leitores do sistema (${registeredUsersData.length} ativos)`;
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-12 text-slate-400 dark:text-slate-500">
+                        <i class="fas fa-users text-3xl mb-2 opacity-30"></i>
+                        <p class="text-xs font-semibold">Nenhum usuário leitor encontrado.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            filtered.forEach((u) => {
+                const div = document.createElement('div');
+                div.className = "bg-slate-50 dark:bg-slate-950/80 rounded-2xl p-3.5 border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3";
+                div.innerHTML = `
+                    <div class="flex items-center gap-3 min-w-0">
+                        <div class="w-10 h-10 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold flex items-center justify-center shrink-0">
+                            ${escapeHTML(u.name.charAt(0).toUpperCase())}
+                        </div>
+                        <div class="min-w-0">
+                            <h4 class="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 truncate">${escapeHTML(u.name)}</h4>
+                            <p class="text-[11px] text-slate-500 dark:text-slate-400 truncate"><i class="fas fa-envelope text-slate-400"></i> ${escapeHTML(u.email)}</p>
+                            <p class="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5"><i class="fas fa-calendar-alt"></i> Cadastrado em ${new Date(u.createdAt).toLocaleDateString('pt-BR')}</p>
+                        </div>
+                    </div>
+                    <button type="button" onclick="deleteRegisteredUser('${u.id}', '${escapeHTML(u.name)}', '${escapeHTML(u.email)}')" class="px-3 py-1.5 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-600 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition-colors self-end sm:self-center">
+                        <i class="fas fa-user-xmark"></i> Excluir Usuário
+                    </button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function deleteRegisteredUser(userId, userName, userEmail) {
+            if (!currentUser || currentUser.role !== 'admin') return;
+            if (!confirm(`Tem certeza de que deseja excluir permanentemente a conta de ${userName} (${userEmail})?`)) return;
+
+            const idx = registeredUsersData.findIndex(u => u.id === userId);
+            if (idx === -1) return;
+
+            const removed = registeredUsersData.splice(idx, 1)[0];
+            deletedEmailsData.push(removed.email.toLowerCase());
+
+            localStorage.setItem(STORAGE_KEY_REGISTERED_USERS, JSON.stringify(registeredUsersData));
+            localStorage.setItem(STORAGE_KEY_DELETED_USERS, JSON.stringify(deletedEmailsData));
+
+            showToast(`Conta de ${userName} excluída permanentemente!`, "warning");
+            renderUsersList();
+            document.getElementById('drawer-users-count').textContent = registeredUsersData.length;
+        }
+
+        function openUserManagementModal() {
+            renderUsersList();
+            document.getElementById('user-mgmt-modal').classList.remove('hidden');
+        }
+
+        function closeUserManagementModal() {
+            document.getElementById('user-mgmt-modal').classList.add('hidden');
+        }
+
+        // --- DRAWER & MOBILE NAVIGATION ---
+        function openDrawer() {
+            document.getElementById('sidebar-drawer').classList.remove('hidden');
+        }
+
+        function closeDrawer() {
+            document.getElementById('sidebar-drawer').classList.add('hidden');
+        }
+
+        function showMobileSection(sec) {
+            if (sec === 'add') {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+
+        function fillSampleSheet() {
+            document.getElementById('sheet-title').value = "Escala Semanal da Equipe de Vendas";
+            document.getElementById('sheet-category').value = "Escala & Plantão";
+            document.getElementById('sheet-url').value = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT1X3eX_sample/pubhtml?widget=true&headers=false";
+            document.getElementById('sheet-desc').value = "Escala em tempo real para controle de turnos do departamento comercial.";
+            showToast("Exemplo de planilha preenchido!", "info");
+        }
+
+        // --- UTILS & TOAST ---
+        function showToast(msg, type = 'success') {
+            const toast = document.getElementById('toast');
+            const card = document.getElementById('toast-card');
+            const icon = document.getElementById('toast-icon');
+            document.getElementById('toast-msg').textContent = msg;
+
+            if (type === 'error') {
+                card.className = "bg-rose-950 text-rose-100 border-rose-800 p-3.5 rounded-2xl shadow-xl text-xs sm:text-sm font-medium flex items-center justify-between border backdrop-blur-md";
+                icon.className = "fas fa-exclamation-circle text-rose-400 text-base shrink-0";
+            } else if (type === 'warning') {
+                card.className = "bg-amber-950 text-amber-100 border-amber-800 p-3.5 rounded-2xl shadow-xl text-xs sm:text-sm font-medium flex items-center justify-between border backdrop-blur-md";
+                icon.className = "fas fa-exclamation-triangle text-amber-400 text-base shrink-0";
+            } else {
+                card.className = "bg-slate-900 text-white dark:bg-slate-800 dark:border-slate-700 p-3.5 rounded-2xl shadow-xl text-xs sm:text-sm font-medium flex items-center justify-between border border-slate-700/80 backdrop-blur-md";
+                icon.className = "fas fa-check-circle text-emerald-400 text-base shrink-0";
+            }
+
+            toast.classList.remove('-translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(hideToast, 3000);
+        }
+
+        function hideToast() {
+            const toast = document.getElementById('toast');
+            toast.classList.remove('translate-y-0', 'opacity-100');
+            toast.classList.add('-translate-y-20', 'opacity-0');
+        }
+
+        function escapeHTML(str) {
+            if (!str) return '';
+            return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
         }
     </script>
 </body>
