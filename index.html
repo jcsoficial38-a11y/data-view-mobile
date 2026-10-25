@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data View Mobile</title>
+    
+    <!-- Configurações completas de PWA para instalação nativa -->
+    <link rel="manifest" href="data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22Data%20View%20Mobile%22%2C%22short_name%22%3A%22Data%20View%22%2C%22start_url%22%3A%22%2F%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23ffffff%22%2C%22theme_color%22%3A%22%232563eb%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22https%3A%2F%2Fcdn-icons-png.flaticon.com%2F512%2F2885%2F2885437.png%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fpng%22%7D%5D%7D">
+    <meta name="theme-color" content="#2563eb">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 text-gray-900 min-h-screen flex flex-col">
+
+    <!-- Cabeçalho -->
+    <header class="bg-blue-600 text-white shadow-md p-4 flex justify-between items-center">
+        <h1 class="text-xl font-bold">Data View Mobile</h1>
+        <button id="adminBtn" class="bg-blue-700 hover:bg-blue-800 text-sm px-3 py-1.5 rounded-lg font-medium transition">
+            Admin
+        </button>
+    </header>
+
+    <!-- Conteúdo Principal -->
+    <main class="flex-1 p-4 max-w-md w-full mx-auto flex flex-col justify-center">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 text-center">
+            <h2 class="text-lg font-semibold text-gray-800 mb-2">Aplicação Pronta</h2>
+            <p class="text-sm text-gray-600 mb-4">O sistema está configurado, integrado e pronto para ser instalado diretamente no seu telemóvel.</p>
+            <div class="p-3 bg-blue-50 text-blue-700 rounded-xl text-sm font-medium">
+                PWA Ativo &bull; Pronto para Instalação
+            </div>
+        </div>
+    </main>
+
+    <!-- Registo automático do Service Worker embutido -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            const swCode = `
+                self.addEventListener('install', (e) => { self.skipWaiting(); });
+                self.addEventListener('fetch', (e) => { e.respondWith(fetch(e.request)); });
+            `;
+            const blob = new Blob([swCode], { type: 'text/javascript' });
+            const swUrl = URL.createObjectURL(blob);
+            navigator.serviceWorker.register(swUrl).catch((err) => {
+                console.error("Erro no Service Worker:", err);
+            });
+        }
+    </script>
+</body>
+</html>
